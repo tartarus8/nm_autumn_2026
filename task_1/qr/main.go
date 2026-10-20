@@ -6,19 +6,9 @@ import (
 	"nm/internal/linalg"
 )
 
-type Task struct {
-	labio.Parameters
-	ID     string        `json:"id"`
-	Matrix linalg.Matrix `json:"matrix"`
-}
-
-func run(o labio.Options) error {
-	tasks, err := labio.ReadTasks[Task](o.Input)
-	if err != nil {
-		return err
-	}
+func run(extraInfo bool) error {
 	for _, t := range tasks {
-		if err = t.Check(); err != nil {
+		if err := t.Check(); err != nil {
 			return err
 		}
 		fmt.Printf("task %s; epsilon=%g\n", t.ID, t.Epsilon)
@@ -34,13 +24,15 @@ func run(o labio.Options) error {
 		fmt.Printf("eigenvalues = %.12g\nQR iterations = %d\n", result.Values, len(result.History))
 		linalg.PrintMatrix("Q*R", product)
 		fmt.Printf("max |QR-A| = %.3e; max |Q^T Q-I| = %.3e\n", linalg.MaxDifference(product, t.Matrix), linalg.MaxDifference(linalg.Multiply(linalg.Transpose(q), q), linalg.Identity(len(q))))
-		if o.ExtraInfo {
+		if extraInfo {
 			for _, step := range result.History {
-				fmt.Printf("iteration %d: block size %d, %s shift, last subdiagonal %.5g\n", step.Iteration, step.Size, step.Shift, step.Subdiagonal)
+				fmt.Printf("iteration %d: block size %d, last subdiagonal %.5g\n", step.Iteration, step.Size, step.Subdiagonal)
 			}
 		}
 		fmt.Println()
 	}
 	return nil
 }
-func main() { labio.Main(run) }
+func main() {
+	labio.Main(run)
+}

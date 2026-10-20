@@ -12,7 +12,6 @@ type IterativeResult struct {
 	Block       int
 }
 
-// LinearIterations uses Jacobi, or Gauss-Seidel when seidel is true
 func LinearIterations(a Matrix, b []float64, epsilon float64, limit int, seidel bool) (IterativeResult, error) {
 	n := len(a)
 	alpha, beta := Zeros(n, n), make([]float64, n)

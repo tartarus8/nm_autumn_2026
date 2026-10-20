@@ -12,7 +12,7 @@ func ThreeDiag(lower, diagonal, upper, rhs []float64) (x, p, q []float64, err er
 			value -= lower[i-1] * q[i-1]
 		}
 		if denominator == 0 {
-			return nil, nil, nil, fmt.Errorf("ThreeDiag: zero denominator at row %d", i+1)
+			return nil, nil, nil, fmt.Errorf("threeDiag: zero denominator at row %d", i+1)
 		}
 		if i < n-1 {
 			p[i] = -upper[i] / denominator
@@ -26,7 +26,7 @@ func ThreeDiag(lower, diagonal, upper, rhs []float64) (x, p, q []float64, err er
 	return x, p, q, nil
 }
 
-func ThreeDiagProduct(lower, diagonal, upper, x []float64) []float64 {
+func threeDiagProduct(lower, diagonal, upper, x []float64) []float64 {
 	b := make([]float64, len(x))
 	for i := range x {
 		b[i] = diagonal[i] * x[i]

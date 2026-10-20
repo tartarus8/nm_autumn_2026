@@ -1,50 +1,25 @@
 package labio
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
 
 	"nm/internal/linalg"
 )
 
-type Options struct {
-	Input     string
-	ExtraInfo bool
-}
-
-func Main(run func(Options) error) {
-	_, source, _, _ := runtime.Caller(1)
-	dir := filepath.Dir(source)
-	input := flag.String("input", filepath.Join(dir, "tests.json"), "input JSON file")
+func Main(run func(bool) error) {
 	extra := flag.Bool("extraInfo", false, "print intermediate steps and checks")
 	flag.Parse()
-	if err := run(Options{Input: *input, ExtraInfo: *extra}); err != nil {
+	if err := run(*extra); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func ReadTasks[T any](path string) ([]T, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var input struct {
-		Tasks []T `json:"tasks"`
-	}
-	if err = json.Unmarshal(data, &input); err != nil {
-		return nil, err
-	}
-	return input.Tasks, nil
-}
-
 type Parameters struct {
-	Epsilon       float64 `json:"epsilon"`
-	MaxIterations int     `json:"max_iterations"`
+	Epsilon       float64
+	MaxIterations int
 }
 
 func (p Parameters) Check() error {
@@ -54,7 +29,6 @@ func (p Parameters) Check() error {
 	return nil
 }
 
-// PrintHistory keeps convergence analysis in the terminal.
 func PrintHistory(name string, history []linalg.Step, reference []float64) {
 	fmt.Print(name + ": iteration | estimate | residual")
 	if reference != nil {
