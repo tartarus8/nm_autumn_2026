@@ -1,0 +1,4 @@
+{"tasks":[
+  {"id":"variant_5","matrix":[[5,8,-2],[7,-2,-4],[5,8,-1]],"epsilon":1e-06,"max_iterations":10000},
+  {"id":"variant_6","matrix":[[8,-1,-3],[-5,9,-8],[4,-5,7]],"epsilon":1e-06,"max_iterations":10000}
+]}

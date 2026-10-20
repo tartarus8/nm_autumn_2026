@@ -1,4 +1,4 @@
-package main
+package linalg
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ type Factors struct {
 	Swaps   int
 }
 
-func identity(n int) Matrix {
+func Identity(n int) Matrix {
 	a := make(Matrix, n)
 	for i := range a {
 		a[i] = make([]float64, n)
@@ -21,11 +21,9 @@ func identity(n int) Matrix {
 	return a
 }
 
-// factorLU uses partial pivoting to construct P*A = L*U.
-// The input is a nonempty square matrix and is left unchanged.
-func factorLU(a Matrix, extraInfo bool) (Factors, error) {
+func FactorLU(a Matrix, extraInfo bool) (Factors, error) {
 	n := len(a)
-	f := Factors{L: identity(n), U: make(Matrix, n), P: identity(n)}
+	f := Factors{L: Identity(n), U: make(Matrix, n), P: Identity(n)}
 	for i := range a {
 		f.U[i] = append([]float64(nil), a[i]...)
 	}
@@ -38,22 +36,21 @@ func factorLU(a Matrix, extraInfo bool) (Factors, error) {
 			}
 		}
 		if f.U[pivot][k] == 0 {
-			return Factors{}, fmt.Errorf("singular matrix: zero pivot in column %d", k+1)
+			return Factors{}, fmt.Errorf("singular matrix: zero pivot in column")
 		}
 		if extraInfo {
-			fmt.Printf("Column %d: choose row %d, pivot = %.8g\n", k+1, pivot+1, f.U[pivot][k])
+			fmt.Printf("column %d: choose row %d, pivot = %.10g\n", k+1, pivot+1, f.U[pivot][k])
 		}
 
 		if pivot != k {
 			f.U[k], f.U[pivot] = f.U[pivot], f.U[k]
 			f.P[k], f.P[pivot] = f.P[pivot], f.P[k]
-			// Only completed columns of L contain elimination history.
 			for j := 0; j < k; j++ {
 				f.L[k][j], f.L[pivot][j] = f.L[pivot][j], f.L[k][j]
 			}
 			f.Swaps++
 			if extraInfo {
-				fmt.Printf("Swap rows %d and %d in U and P; swap the first %d entries of these rows in L\n",
+				fmt.Printf("swap rows %d and %d in U and P; swap the first %d entries of these rows in L\n",
 					k+1, pivot+1, k)
 			}
 		}
@@ -61,7 +58,7 @@ func factorLU(a Matrix, extraInfo bool) (Factors, error) {
 		for i := k + 1; i < n; i++ {
 			f.L[i][k] = f.U[i][k] / f.U[k][k]
 			if extraInfo {
-				fmt.Printf("L[%d,%d] = %.8g / %.8g = %.8g; R%d <- R%d - (%.8g)*R%d\n",
+				fmt.Printf("L[%d,%d] = %.10g / %.10g = %.10g; R%d <- R%d - (%.10g)*R%d\n",
 					i+1, k+1, f.U[i][k], f.U[k][k], f.L[i][k], i+1, i+1, f.L[i][k], k+1)
 			}
 			f.U[i][k] = 0
@@ -70,15 +67,15 @@ func factorLU(a Matrix, extraInfo bool) (Factors, error) {
 			}
 		}
 		if extraInfo {
-			printMatrix("L after this column", f.L)
-			printMatrix("U after this column", f.U)
-			printMatrix("P after this column", f.P)
+			PrintMatrix("L after this column", f.L)
+			PrintMatrix("U after this column", f.U)
+			PrintMatrix("P after this column", f.P)
 		}
 	}
 	return f, nil
 }
 
-func matVec(a Matrix, x []float64) []float64 {
+func MatVec(a Matrix, x []float64) []float64 {
 	result := make([]float64, len(a))
 	for i := range a {
 		for j := range a[i] {
@@ -88,9 +85,9 @@ func matVec(a Matrix, x []float64) []float64 {
 	return result
 }
 
-func solveLU(f Factors, b []float64, extraInfo bool) []float64 {
+func SolveLU(f Factors, b []float64, extraInfo bool) []float64 {
 	n := len(b)
-	pb := matVec(f.P, b)
+	pb := MatVec(f.P, b)
 	if extraInfo {
 		fmt.Printf("Pb = %.10g\nForward substitution: Ly = Pb\n", pb)
 	}
@@ -102,12 +99,12 @@ func solveLU(f Factors, b []float64, extraInfo bool) []float64 {
 			y[i] -= f.L[i][j] * y[j]
 		}
 		if extraInfo {
-			fmt.Printf("y[%d] = %.8g\n", i+1, y[i])
+			fmt.Printf("y[%d] = %.10g\n", i+1, y[i])
 		}
 	}
 
 	if extraInfo {
-		fmt.Println("Backward substitution: Ux = y")
+		fmt.Println("backward substitution: Ux = y")
 	}
 	x := make([]float64, n)
 	for i := n - 1; i >= 0; i-- {
@@ -126,7 +123,7 @@ func solveLU(f Factors, b []float64, extraInfo bool) []float64 {
 	return x
 }
 
-func determinantLU(f Factors) float64 {
+func DeterminantLU(f Factors) float64 {
 	det := 1.0
 	if f.Swaps%2 != 0 {
 		det = -1
@@ -137,7 +134,7 @@ func determinantLU(f Factors) float64 {
 	return det
 }
 
-func inverseLU(f Factors, extraInfo bool) Matrix {
+func InverseLU(f Factors, extraInfo bool) Matrix {
 	n := len(f.U)
 	inverse := make(Matrix, n)
 	for i := range inverse {
@@ -147,10 +144,10 @@ func inverseLU(f Factors, extraInfo bool) Matrix {
 		e := make([]float64, n)
 		e[j] = 1
 		if extraInfo {
-			fmt.Printf("\nInverse column %d: solve A*z = e%d, e%d = %v using the same factors\n",
+			fmt.Printf("\ninverse column %d: solve A*z = e%d, e%d = %v using the same factors\n",
 				j+1, j+1, j+1, e)
 		}
-		column := solveLU(f, e, extraInfo)
+		column := SolveLU(f, e, extraInfo)
 		for i := 0; i < n; i++ {
 			inverse[i][j] = column[i]
 		}
@@ -158,7 +155,7 @@ func inverseLU(f Factors, extraInfo bool) Matrix {
 	return inverse
 }
 
-func multiply(a, b Matrix) Matrix {
+func Multiply(a, b Matrix) Matrix {
 	c := make(Matrix, len(a))
 	for i := range a {
 		c[i] = make([]float64, len(b[0]))
@@ -171,7 +168,7 @@ func multiply(a, b Matrix) Matrix {
 	return c
 }
 
-func maxDifference(a, b Matrix) float64 {
+func MaxDifference(a, b Matrix) float64 {
 	difference := 0.0
 	for i := range a {
 		for j := range a[i] {
@@ -179,4 +176,15 @@ func maxDifference(a, b Matrix) float64 {
 		}
 	}
 	return difference
+}
+
+func PrintMatrix(name string, a Matrix) {
+	fmt.Println(name)
+	for _, row := range a {
+		for _, value := range row {
+			fmt.Printf(" %14.8g", value)
+		}
+		fmt.Println()
+	}
+	fmt.Println()
 }
